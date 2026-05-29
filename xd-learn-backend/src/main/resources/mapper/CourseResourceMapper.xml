@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.example.xdlearnbackend.mapper.CourseResourceMapper">
+    <select id="findByCourseId" resultType="com.example.xdlearnbackend.vo.CourseResourceVO">
+        SELECT
+            cr.id,
+            cr.resource_name AS name,
+            IFNULL(rt.name, '文档') AS type,
+            0 AS size,
+            DATE_FORMAT(cr.created_time, '%Y-%m-%dT%H:%i:%sZ') AS uploadDate,
+            0 AS downloadCount,
+            cr.resource_url AS url
+        FROM course_resource cr
+                 LEFT JOIN resource_type rt ON cr.type_id = rt.id
+        WHERE cr.course_id = #{courseId}
+        ORDER BY cr.created_time DESC
+    </select>
+
+    <select id="findVideosByCourseId" resultType="com.example.xdlearnbackend.vo.VideoListVO">
+        SELECT
+            cr.id,
+            cr.resource_name AS name,
+            cr.chapter_id AS chapterId,
+            cc.title AS chapterName,
+            IFNULL(cr.duration, 0) AS duration,
+            0 AS playCount,
+            cr.sort_order AS order
+        FROM course_resource cr
+            LEFT JOIN course_chapter cc ON cr.chapter_id = cc.id
+        WHERE cr.course_id = #{courseId}
+          AND cr.type_id = 1
+        ORDER BY cr.chapter_id, cr.sort_order
+    </select>
+
+    <select id="findVideoUrlById" resultType="com.example.xdlearnbackend.vo.VideoDetailVO">
+        SELECT
+            cr.resource_url AS url,
+            IFNULL(cr.duration, 0) AS duration,
+            '1080p' AS quality
+        FROM course_resource cr
+        WHERE cr.id = #{videoId}
+          AND cr.type_id = 1
+    </select>
+</mapper>

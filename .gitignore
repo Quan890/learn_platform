@@ -1,0 +1,26 @@
+# 敏感配置
+xd-learn-backend/src/main/resources/application.yaml
+
+# 后端构建产物
+xd-learn-backend/target/
+
+# 前端依赖与构建产物
+xd-learn-frontend/node_modules/
+xd-learn-frontend/dist/
+
+# IDE 文件
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 临时文件
+tempfile_*.java
+
+# AI工具临时文件（你之前的.claude目录）
+.claude/

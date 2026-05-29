@@ -1,0 +1,55 @@
+# 服务器配置
+server:
+  # 服务端口
+  port: 8080
+
+# Spring配置
+spring:
+  # 数据源配置
+  datasource:
+    # 数据库连接URL
+    url: jdbc:mysql://localhost:3306/xd_learn_platform?useUnicode=true&characterEncoding=UTF-8&serverTimezone=Asia/Shanghai
+    # 数据库用户名
+    username: ${DB_USERNAME:root}
+    # 数据库密码
+    password: ${DB_PASSWORD:your_password}
+    # 数据库驱动类名
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  # Servlet配置
+  servlet:
+    # 文件上传配置
+    multipart:
+      # 最大文件大小
+      max-file-size: 100MB
+      # 最大请求大小
+      max-request-size: 100MB
+  # MVC配置
+  mvc:
+    # 当没有找到处理程序时抛出异常
+    throw-exception-if-no-handler-found: true
+
+# MyBatis配置
+mybatis:
+  # Mapper XML文件位置
+  mapper-locations: classpath:mapper/*.xml
+  # 实体类别名包路径
+  type-aliases-package: com.example.xdlearnbackend.entity
+
+# JWT配置
+jwt:
+  # JWT密钥 —— 请修改为自定义密钥
+  secret: your_jwt_secret_here
+  # JWT过期时间（秒）
+  expiration: 86400
+
+# DashScope API配置
+dashscope:
+  # API密钥 —— 请填入你自己的密钥
+  api:
+    key: your_dashscope_api_key_here
+
+# 日志配置
+logging:
+  level:
+    # 项目包日志级别
+    com.xiaodi.learnplatform: debug

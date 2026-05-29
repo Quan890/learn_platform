@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.example.xdlearnbackend.mapper.CourseMapper">
+
+    <resultMap id="courseResultMap" type="com.example.xdlearnbackend.entity.Course">
+        <id property="id" column="id"/>
+        <result property="title" column="title"/>
+        <result property="description" column="description"/>
+        <result property="coverImage" column="cover_image"/>
+        <result property="teacherName" column="teacher_name"/>
+        <result property="price" column="price"/>
+        <result property="rating" column="rating"/>
+        <result property="studentCount" column="student_count"/>
+        <result property="createdTime" column="created_time"/>
+        <result property="updatedTime" column="updated_time"/>
+
+        <association property="type" javaType="com.example.xdlearnbackend.entity.CourseType">
+            <id property="id" column="type_id"/>
+            <result property="name" column="type_name"/>
+        </association>
+
+        <association property="creator" javaType="com.example.xdlearnbackend.entity.User">
+            <id property="id" column="creator_id"/>
+            <result property="username" column="creator_username"/>
+        </association>
+    </resultMap>
+
+    <select id="count" resultType="int">
+        SELECT COUNT(*) FROM course c
+        <where>
+            <if test="course.title != null and course.title != ''">
+                AND c.title LIKE CONCAT('%', #{course.title}, '%')
+            </if>
+            <if test="course.description != null and course.title != ''">
+                AND c.description LIKE CONCAT('%', #{course.description}, '%')
+            </if>
+            <if test="course.teacherName != null and course.teacherName != ''">
+                AND c.teacher_name LIKE CONCAT('%', #{course.teacherName}, '%')
+            </if>
+            <if test="course.type != null and course.type.id != null">
+                AND c.type_id = #{course.type.id}
+            </if>
+            <if test="course.creator != null and course.creator.id != null">
+                AND c.creator_id = #{course.creator.id}
+            </if>
+            <if test="minRating != null">
+                AND c.rating >= #{minRating}
+            </if>
+            <if test="minStudentCount != null">
+                AND c.student_count >= #{minStudentCount}
+            </if>
+        </where>
+    </select>
+
+    <select id="findListByPage" resultMap="courseResultMap">
+        SELECT c.*,
+        ct.name as type_name,
+        u.username as creator_username
+        FROM course c
+        LEFT JOIN course_type ct ON c.type_id = ct.id
+        LEFT JOIN user u ON c.creator_id = u.id
+        <where>
+            <if test="course.title != null and course.title != ''">
+                AND c.title LIKE CONCAT('%', #{course.title}, '%')
+            </if>
+            <if test="course.description != null and course.description != ''">
+                AND c.description LIKE CONCAT('%', #{course.description}, '%')
+            </if>
+            <if test="course.teacherName != null and course.teacherName != ''">
+                AND c.teacher_name LIKE CONCAT('%', #{course.teacherName}, '%')
+            </if>
+            <if test="course.type != null and course.type.id != null">
+                AND c.type_id = #{course.type.id}
+            </if>
+            <if test="course.creator != null and course.creator.id != null">
+                AND c.creator_id = #{course.creator.id}
+            </if>
+        </where>
+        ORDER BY c.created_time DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <select id="findById" resultMap="courseResultMap">
+        SELECT c.*,
+               ct.name as type_name,
+               u.username as creator_username
+        FROM course c
+                 LEFT JOIN course_type ct ON c.type_id = ct.id
+                 LEFT JOIN user u ON c.creator_id = u.id
+        WHERE c.id = #{id}
+    </select>
+
+    <select id="findLearningObjectivesByCourseId" resultType="java.lang.String">
+        SELECT content FROM learning_objective WHERE course_id = #{courseId}
+    </select>
+
+    <select id="findTargetAudienceByCourseId" resultType="java.lang.String">
+        SELECT content FROM target_audience WHERE course_id = #{courseId}
+    </select>
+
+    <resultMap id="ChapterVideoMap" type="com.example.xdlearnbackend.vo.CourseChapterVO">
+        <id property="id" column="chapter_id"/>
+        <result property="title" column="chapter_title"/>
+
+        <collection property="videos" ofType="com.example.xdlearnbackend.vo.VideoVO">
+            <id property="id" column="video_id"/>
+            <result property="title" column="video_title"/>
+            <result property="duration" column="duration"/>
+            <result property="playCount" column="play_count"/>
+        </collection>
+    </resultMap>
+
+    <select id="findChaptersByCourseId" resultMap="ChapterVideoMap">
+        SELECT
+            cc.id AS chapter_id,
+            cc.title AS chapter_title,
+            IFNULL(cr.id, -1) AS video_id,
+            IFNULL(cr.resource_name, '') AS video_title,
+            CAST(IFNULL(cr.duration, 0) AS UNSIGNED) AS duration,
+            0 AS play_count
+        FROM course_chapter cc
+                 LEFT JOIN course_resource cr ON cc.id = cr.chapter_id
+        WHERE cc.course_id = #{courseId}
+        ORDER BY cc.sort_order, cr.sort_order
+    </select>
+
+</mapper>
