@@ -77,7 +77,7 @@ export const userApi = {
   // 创建课程
   createCourse: (data) => request.post('/user/courses', data),
   // 获取用户收藏列表
-  getCollectionList: (params) => request.get('/user/collections', { params }),
+  getCollectionList: (params) => request.get('/favorites', { params }),
   // 取消收藏
-  cancelCollection: (id) => request.delete(`/user/collections/${id}`)
+  cancelCollection: (id) => request.delete(`/favorites/${id}`)
 }

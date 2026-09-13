@@ -4,8 +4,11 @@ import com.example.xdlearnbackend.entity.Favorite;
 import com.example.xdlearnbackend.exception.BusinessException;
 import com.example.xdlearnbackend.mapper.FavoriteMapper;
 import com.example.xdlearnbackend.service.FavoriteService;
+import com.example.xdlearnbackend.vo.FavoriteCourseVO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * @author 木又
@@ -22,7 +25,7 @@ public class FavoriteServiceImpl implements FavoriteService {
         // 检查是否已收藏
         Favorite favorite = favoriteMapper.selectByUserAndCourse(userId, courseId);
         if (favorite != null) {
-            throw new BusinessException("您已收藏过该课程");
+            throw new BusinessException(400, "您已收藏过该课程");
         }
         // 新增收藏
         Favorite newFavorite = new Favorite();
@@ -35,7 +38,7 @@ public class FavoriteServiceImpl implements FavoriteService {
     public void unfavoriteCourse(Long userId, Long courseId) {
         Favorite favorite = favoriteMapper.selectByUserAndCourse(userId, courseId);
         if (favorite == null) {
-            throw new BusinessException("您尚未收藏该课程");
+            throw new BusinessException(400, "您尚未收藏该课程");
         }
         favoriteMapper.delete(userId, courseId);
     }
@@ -44,5 +47,10 @@ public class FavoriteServiceImpl implements FavoriteService {
     public boolean checkFavoriteStatus(Long userId, Long courseId) {
         Favorite favorite = favoriteMapper.selectByUserAndCourse(userId, courseId);
         return favorite != null;
+    }
+
+    @Override
+    public List<FavoriteCourseVO> listFavoriteCourses(Long userId) {
+        return favoriteMapper.selectFavoriteCourses(userId);
     }
 }

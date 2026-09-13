@@ -74,7 +74,7 @@ public class CourseServiceImpl implements CourseService {
     public CourseVO getCourseDetail(Long id) {
         Course course = courseMapper.findById(id);
         if (course == null) {
-            throw new BusinessException("课程不存在");
+            throw new BusinessException(404, "课程不存在");
         }
 
         CourseVO courseVO = new CourseVO();

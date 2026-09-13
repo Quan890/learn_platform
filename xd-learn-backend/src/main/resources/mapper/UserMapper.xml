@@ -15,4 +15,27 @@
     <select id="findBYUsername" resultMap="BaseResultMap">
         SELECT * FROM `user` WHERE username = #{username}
     </select>
+
+    <select id="findById" resultMap="BaseResultMap">
+        SELECT * FROM `user` WHERE id = #{id}
+    </select>
+
+    <select id="findByEmail" resultMap="BaseResultMap">
+        SELECT * FROM `user` WHERE email = #{email}
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO `user` (username, nickname, password, email, avatar, created_time, updated_time)
+        VALUES (#{username}, #{nickname}, #{password}, #{email}, #{avatar}, NOW(), NOW())
+    </insert>
+
+    <update id="updateProfile">
+        UPDATE `user`
+        <set>
+            <if test="nickname != null">nickname = #{nickname},</if>
+            <if test="email != null">email = #{email},</if>
+            <if test="password != null">password = #{password},</if>
+        </set>
+        WHERE id = #{id}
+    </update>
 </mapper>

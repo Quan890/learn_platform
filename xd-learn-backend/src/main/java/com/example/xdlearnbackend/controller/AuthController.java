@@ -1,6 +1,8 @@
 package com.example.xdlearnbackend.controller;
 
 import com.example.xdlearnbackend.common.Result;
+import com.example.xdlearnbackend.dto.RefreshTokenDTO;
+import com.example.xdlearnbackend.dto.RegisterDTO;
 import com.example.xdlearnbackend.dto.UserLoginDTO;
 import com.example.xdlearnbackend.entity.User;
 import com.example.xdlearnbackend.exception.BusinessException;
@@ -9,6 +11,8 @@ import com.example.xdlearnbackend.util.JwtUtil;
 import com.example.xdlearnbackend.vo.LoginResponseVO;
 import com.example.xdlearnbackend.vo.UserInfoVO;
 import jakarta.servlet.http.HttpServletRequest;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
 import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.validation.annotation.Validated;
@@ -46,6 +50,45 @@ public class AuthController {
         } else {
             throw new BusinessException(401, "用户名或密码错误");
         }
+    }
+
+    /**
+     * 注册新用户
+     */
+    @PostMapping("/register")
+    public Result<Void> register(@Validated @RequestBody RegisterDTO registerDTO) {
+        userService.register(registerDTO);
+        return Result.success("注册成功", null);
+    }
+
+    /**
+     * 使用 refreshToken 换取新的令牌对
+     */
+    @PostMapping("/refresh")
+    public Result<LoginResponseVO> refresh(@Validated @RequestBody RefreshTokenDTO refreshTokenDTO) {
+        String refreshToken = refreshTokenDTO.getRefreshToken();
+        String username;
+        try {
+            username = jwtUtil.extractUsername(refreshToken);
+            if (username == null || jwtUtil.isTokenExpired(refreshToken)) {
+                throw new BusinessException(401, "刷新令牌已失效");
+            }
+        } catch (ExpiredJwtException e) {
+            throw new BusinessException(401, "刷新令牌已过期");
+        } catch (JwtException | IllegalArgumentException e) {
+            throw new BusinessException(401, "刷新令牌无效");
+        }
+
+        User user = userService.getUserByUsername(username);
+        if (user == null) {
+            throw new BusinessException(401, "用户不存在");
+        }
+
+        LoginResponseVO loginResponse = new LoginResponseVO();
+        loginResponse.setAccessToken(jwtUtil.generateToken(username));
+        loginResponse.setRefreshToken(jwtUtil.generateRefreshToken(username));
+        loginResponse.setUserInfo(getUserInfoVO(user));
+        return Result.success("刷新成功", loginResponse);
     }
     private static @NonNull UserInfoVO getUserInfoVO(User user) {
         UserInfoVO userInfo = new UserInfoVO();

@@ -1,8 +1,11 @@
 package com.example.xdlearnbackend.mapper;
 
 import com.example.xdlearnbackend.entity.Favorite;
+import com.example.xdlearnbackend.vo.FavoriteCourseVO;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
+
+import java.util.List;
 
 /**
  * @author 木又
@@ -33,4 +36,11 @@ public interface FavoriteMapper {
      * @return
      */
     int delete(@Param("userId") Long userId, @Param("courseId") Long courseId);
+
+    /**
+     * 查询用户收藏的课程列表
+     * @param userId 用户ID
+     * @return 收藏的课程列表
+     */
+    List<FavoriteCourseVO> selectFavoriteCourses(Long userId);
 }

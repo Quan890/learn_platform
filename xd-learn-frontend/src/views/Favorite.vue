@@ -19,17 +19,17 @@
           <div class="course-card-inner">
             <!-- 课程封面 -->
             <div class="course-cover">
-              <div class="cover-placeholder" :style="{ backgroundImage: `linear-gradient(135deg, #${Math.floor(Math.random()*16777215).toString(16)} 0%, #${Math.floor(Math.random()*16777215).toString(16)} 100%)` }">
-                <span class="course-type">{{ course.type?.name || course.type }}</span>
+              <div class="cover-placeholder" :style="{ backgroundImage: coverStyle(course) }">
+                <span class="course-type">{{ course.typeName || '课程' }}</span>
               </div>
             </div>
-            
+
             <!-- 课程信息 -->
             <div class="course-info">
               <h3 class="course-title">{{ course.title }}</h3>
               <div class="course-meta">
-                <span class="course-teacher">{{ course.teacherName || course.author }}</span>
-                <span class="course-price">{{ course.price === 0 ? '免费' : `¥${course.price}` }}</span>
+                <span class="course-teacher">{{ course.teacherName || '未知讲师' }}</span>
+                <span class="course-price">{{ Number(course.price) === 0 ? '免费' : `¥${course.price}` }}</span>
               </div>
             </div>
             
@@ -66,48 +66,40 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { VideoPlay, Delete } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { userApi } from '../api/index'
 
 const router = useRouter()
 
-// 模拟收藏课程数据
-const favoriteCourses = ref([
-  {
-    id: 1,
-    title: 'Vue3 从入门到精通',
-    description: '全面学习Vue3框架，掌握Composition API和最新特性',
-    coverImage: '',
-    teacherName: '张老师',
-    price: 199,
-    typeId: 1,
-    type: { id: 1, name: '前端开发' },
-    createdAt: '2024-01-01 10:00:00',
-    updatedAt: '2024-01-01 10:00:00'
-  },
-  {
-    id: 3,
-    title: 'Node.js 全栈开发',
-    description: '从后端到前端，构建完整的Web应用',
-    coverImage: '',
-    teacherName: '王老师',
-    price: 399,
-    typeId: 2,
-    type: { id: 2, name: '后端开发' },
-    createdAt: '2024-03-01 09:15:00',
-    updatedAt: '2024-03-01 09:15:00'
-  },
-  {
-    id: 5,
-    title: 'Java 基础教程',
-    description: 'Java编程基础，面向对象编程思想',
-    coverImage: '',
-    teacherName: '刘老师',
-    price: 99,
-    typeId: 2,
-    type: { id: 2, name: '后端开发' },
-    createdAt: '2024-04-01 14:00:00',
-    updatedAt: '2024-04-01 14:00:00'
+// 收藏课程列表
+const favoriteCourses = ref([])
+const loading = ref(false)
+
+// 封面样式：有封面图用封面图，否则按课程ID生成固定的渐变色
+const coverStyle = (course) => {
+  if (course.coverImage) {
+    return `url(${course.coverImage})`
   }
-])
+  const hue = (course.id * 47) % 360
+  return `linear-gradient(135deg, hsl(${hue}, 60%, 55%) 0%, hsl(${(hue + 40) % 360}, 60%, 45%) 100%)`
+}
+
+// 方法：获取收藏课程列表
+const fetchFavoriteCourses = async () => {
+  loading.value = true
+  try {
+    const response = await userApi.getCollectionList()
+    if (response && response.code === 200 && Array.isArray(response.data)) {
+      favoriteCourses.value = response.data
+    } else {
+      favoriteCourses.value = []
+    }
+  } catch (err) {
+    console.error('获取收藏列表失败:', err)
+    ElMessage.error('获取收藏列表失败，请稍后重试')
+  } finally {
+    loading.value = false
+  }
+}
 
 // 方法：查看课程详情
 const viewCourse = (course) => {
@@ -123,17 +115,17 @@ const removeFavorite = async (course) => {
   if (isProcessing.value) {
     return
   }
-  
+
   try {
     isProcessing.value = true
-    
+
     // 1. 显示确认对话框
     await ElMessageBox.confirm('确定要取消收藏这门课程吗？', '提示', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
     })
-    
+
     // 找到课程索引
     const index = favoriteCourses.value.findIndex(item => item.id === course.id)
     if (index !== -1) {
@@ -144,11 +136,11 @@ const removeFavorite = async (course) => {
         duration: 0,
         showClose: false
       })
-      
+
       try {
         // 3. 向后端发送取消收藏请求
-        await cancelFavoriteAPI(course.id)
-        
+        await userApi.cancelCollection(course.id)
+
         // 4. 收到成功响应后，更新UI
         // 添加移除动画效果
         const cardElement = document.querySelectorAll('.course-card')[index]
@@ -157,32 +149,26 @@ const removeFavorite = async (course) => {
           // 等待动画完成后再移除课程
           await new Promise(resolve => setTimeout(resolve, 500))
         }
-        
+
         // 从收藏列表中移除课程
         favoriteCourses.value.splice(index, 1)
-        
+
         // 关闭加载提示
         loadingMessage.close()
-        
+
         // 5. 显示成功提示
         ElMessage.success({
           message: '取消收藏成功',
           duration: 2000,
           showClose: true
         })
-        
-        // 6. 如果收藏列表为空，可以添加一个空状态提示
-        if (favoriteCourses.value.length === 0) {
-          // 这里可以添加空状态处理逻辑
-          console.log('收藏列表已空')
-        }
       } catch (apiError) {
         // 关闭加载提示
         loadingMessage.close()
-        
-        // 7. 若请求失败，显示错误提示并保留课程在列表中
+
+        // 6. 若请求失败，显示错误提示并保留课程在列表中
         ElMessage.error({
-          message: '取消收藏失败，请稍后重试',
+          message: apiError.message || '取消收藏失败，请稍后重试',
           duration: 2000,
           showClose: true
         })
@@ -198,9 +184,6 @@ const removeFavorite = async (course) => {
         showClose: true
       })
       console.error('操作失败:', error)
-    } else {
-      // 用户取消操作
-      ElMessage.info('已取消操作')
     }
   } finally {
     // 重置处理状态
@@ -208,38 +191,10 @@ const removeFavorite = async (course) => {
   }
 }
 
-// 模拟API调用：取消收藏课程
-const cancelFavoriteAPI = async (courseId) => {
-  // 模拟向后端发送取消收藏请求
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      // 模拟API成功响应
-      const success = Math.random() > 0.1; // 90%成功率
-      if (success) {
-        resolve({ success: true, message: '取消收藏成功' });
-      } else {
-        reject(new Error('网络请求失败'));
-      }
-    }, 300); // 模拟网络延迟
-  });
-};
-
 // 页面加载时获取收藏课程数据
 onMounted(() => {
-  // 这里可以添加从后端获取收藏课程的逻辑
-  console.log('获取收藏课程数据');
-  // 示例：fetchFavoriteCourses();
-});
-
-// 模拟API调用：获取收藏课程列表
-const fetchFavoriteCourses = async () => {
-  // 模拟从后端获取收藏课程数据
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(favoriteCourses.value); // 返回模拟数据
-    }, 500);
-  });
-};
+  fetchFavoriteCourses()
+})
 </script>
 
 <style scoped>

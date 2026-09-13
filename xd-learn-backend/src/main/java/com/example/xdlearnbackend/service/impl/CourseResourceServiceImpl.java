@@ -34,7 +34,7 @@ public class CourseResourceServiceImpl implements CourseResourceService {
     public VideoDetailVO getVideoUrl(Long videoId) {
         VideoDetailVO videoUrl = courseResourceMapper.findVideoUrlById(videoId);
         if (videoUrl == null) {
-            throw new BusinessException("视频不存在");
+            throw new BusinessException(404, "视频不存在");
         }
         return videoUrl;
     }

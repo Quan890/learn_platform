@@ -12,6 +12,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.servlet.NoHandlerFoundException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 
 import java.time.LocalDateTime;
@@ -38,7 +39,7 @@ public class GlobalExceptionHandler {
     public Result<Map<String, Object>> handleBusinessException(BusinessException ex, HttpServletRequest request) {
         logger.error("业务异常: {}", ex.getMessage(),ex);
         Map<String, Object> errorInfo = buildErrorInfo(ex.getErrorCode(), ex.getMessage(), request);
-        return Result.error(ex.getErrorCode(), "业务异常");
+        return Result.error(ex.getErrorCode(), ex.getMessage());
     }
 
     /**
@@ -57,7 +58,7 @@ public class GlobalExceptionHandler {
                 .collect(Collectors.joining("; "));
 
         Map<String, Object> errorInfo = buildErrorInfo(400, errorMessage, request);
-        return Result.error(400, "参数校验失败");
+        return Result.error(400, errorMessage);
     }
 
     /**
@@ -76,7 +77,7 @@ public class GlobalExceptionHandler {
                 .collect(Collectors.joining("; "));
 
         Map<String, Object> errorInfo = buildErrorInfo(400, errorMessage, request);
-        return Result.error(400, "参数校验失败");
+        return Result.error(400, errorMessage);
     }
 
     /**
@@ -94,7 +95,7 @@ public class GlobalExceptionHandler {
                 .collect(Collectors.joining("; "));
 
         Map<String, Object> errorInfo = buildErrorInfo(400, errorMessage, request);
-        return Result.error(400, "参数绑定失败");
+        return Result.error(400, errorMessage);
     }
 
     /**
@@ -133,6 +134,20 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(NoHandlerFoundException.class)
     public Result<Map<String, Object>> handleNotFoundException(NoHandlerFoundException ex, HttpServletRequest request) {
+        logger.warn("请求的资源未找到: {}", request.getRequestURI());
+
+        Map<String, Object> errorInfo = buildErrorInfo(404, "请求的资源不存在", request);
+        return Result.error(404, "请求的资源不存在");
+    }
+
+    /**
+     * 处理静态资源未找到异常（Spring 6+ 对无匹配路由/资源抛出）
+     * @param ex       资源未找到异常
+     * @param request  HTTP请求
+     * @return 错误信息
+     */
+    @ExceptionHandler(NoResourceFoundException.class)
+    public Result<Map<String, Object>> handleNoResourceFound(NoResourceFoundException ex, HttpServletRequest request) {
         logger.warn("请求的资源未找到: {}", request.getRequestURI());
 
         Map<String, Object> errorInfo = buildErrorInfo(404, "请求的资源不存在", request);

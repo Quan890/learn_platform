@@ -9,6 +9,7 @@ const CourseDetail = () => import('../views/CourseDetail.vue')
 const Assistant = () => import('../views/Assistant.vue')
 const Profile = () => import('../views/Profile.vue')
 const CourseEdit = () => import('../views/CourseEdit.vue')
+const Favorite = () => import('../views/Favorite.vue')
 
 // 创建路由实例
 const router = createRouter({
@@ -54,6 +55,12 @@ const router = createRouter({
       path: '/profile/courses',
       name: 'MyCourses',
       component: Profile,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/favorites',
+      name: 'Favorites',
+      component: Favorite,
       meta: { requiresAuth: true }
     },
     {

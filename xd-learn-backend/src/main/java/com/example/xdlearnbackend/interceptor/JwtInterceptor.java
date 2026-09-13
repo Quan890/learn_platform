@@ -83,30 +83,36 @@ public class JwtInterceptor implements HandlerInterceptor {
                         return true;
                     } else {
                         logger.warn("User not found for username: {}", username);
-                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                        response.getWriter().write("用户不存在");
+                        writeUnauthorized(response, "用户不存在");
                         return false;
                     }
                 } else {
                     logger.warn("Token expired or username is null");
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                    response.getWriter().write("令牌已过期或无效");
+                    writeUnauthorized(response, "令牌已过期或无效");
                     return false;
                 }
             } catch (Exception e) {
                 logger.error("Error validating token: ", e);
                 // 令牌无效或已过期
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("令牌验证失败: " + e.getMessage());
+                writeUnauthorized(response, "令牌验证失败: " + e.getMessage());
                 return false;
             }
         }
 
         // 未提供令牌或令牌无效
         logger.warn("Missing or invalid Authorization header");
-        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-        response.getWriter().write("缺少有效的认证令牌");
+        writeUnauthorized(response, "缺少有效的认证令牌");
         return false;
+    }
+
+    /**
+     * 返回统一格式的401响应，避免中文乱码
+     */
+    private void writeUnauthorized(HttpServletResponse response, String message) throws Exception {
+        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+        response.setCharacterEncoding("UTF-8");
+        response.setContentType("application/json;charset=UTF-8");
+        response.getWriter().write("{\"code\":401,\"message\":\"" + message.replace("\"", "'") + "\",\"data\":null}");
     }
 
     /**

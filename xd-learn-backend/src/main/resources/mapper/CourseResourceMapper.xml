@@ -24,7 +24,7 @@
             cc.title AS chapterName,
             IFNULL(cr.duration, 0) AS duration,
             0 AS playCount,
-            cr.sort_order AS order
+            cr.sort_order AS `order`
         FROM course_resource cr
             LEFT JOIN course_chapter cc ON cr.chapter_id = cc.id
         WHERE cr.course_id = #{courseId}

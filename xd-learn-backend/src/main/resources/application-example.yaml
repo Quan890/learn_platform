@@ -52,4 +52,4 @@ dashscope:
 logging:
   level:
     # 项目包日志级别
-    com.xiaodi.learnplatform: debug
+    com.example.xdlearnbackend: debug

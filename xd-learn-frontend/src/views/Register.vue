@@ -91,34 +91,41 @@ const registerRules = {
 }
 
 import { ElLoading, ElMessage } from 'element-plus'
+import { authApi } from '../api/index'
 
 const handleRegister = async () => {
   try {
     // 表单验证
     await registerFormRef.value.validate()
-    
+
     // 显示加载状态
     const loadingInstance = ElLoading.service({
       lock: true,
       text: '注册中...',
       background: 'rgba(0, 0, 0, 0.7)'
     })
-    
-    // 模拟API延迟
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
-    // 关闭加载状态
-    loadingInstance.close()
-    
-    // 注册成功
-    ElMessage.success('注册成功，请登录')
-    router.push('/login')
-  } catch (error) {
-    // 表单验证失败或其他错误
-    console.error('注册失败:', error)
-    if (error.message) {
-      ElMessage.error(error.message)
+
+    try {
+      // 调用后端注册接口
+      const response = await authApi.register({
+        username: registerForm.value.username,
+        password: registerForm.value.password,
+        email: registerForm.value.email
+      })
+
+      // 注册成功，跳转登录页
+      ElMessage.success(response.message || '注册成功，请登录')
+      router.push('/login')
+    } catch (error) {
+      // 业务错误（用户名/邮箱已占用等）或网络错误
+      console.error('注册失败:', error)
+      ElMessage.error(error.message || '注册失败，请稍后重试')
+    } finally {
+      loadingInstance.close()
     }
+  } catch (error) {
+    // 表单验证失败
+    console.error('表单验证失败:', error)
   }
 }
 
